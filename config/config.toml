@@ -1,0 +1,17 @@
+[default]
+debug = true
+log_level = "info"
+
+[default.database]
+host = "localhost"
+port = 5432
+
+[default.jwt]
+expire = 30
+
+[production]
+debug = false
+log_level = "warning"
+
+[production.database]
+host = "postgres"
