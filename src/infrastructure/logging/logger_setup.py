@@ -1,14 +1,13 @@
-import logging
-import logging.config
+from logging import Logger, config as logging_config, getLogger
 import sys
-from config.config import config
+from src.config import config
+from src.infrastructure.logging.logger_config_schema import LoggerConfigSchema
 
 
-def setup_logger():
-    log_level = config.log_level.upper()
-    log_file = "app.log"
-
-    log_config = {
+def setup_logger() -> Logger:
+    log_level: str = config.log_level.upper()
+    log_file: str = "app.log"
+    log_config: LoggerConfigSchema = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
@@ -25,7 +24,7 @@ def setup_logger():
                 "class": "logging.StreamHandler",
                 "formatter": "colored",
                 "level": log_level,
-                "stream": sys.stderr,  # uvicorn использует stderr
+                "stream": sys.stderr,
             },
             "file": {
                 "class": "logging.handlers.RotatingFileHandler",
@@ -37,35 +36,33 @@ def setup_logger():
             },
         },
         "root": {
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "level": log_level,
         },
-        # Настройки для конкретных логгеров
         "loggers": {
             "src": {
                 "level": log_level,
-                "handlers": ["console", "file"],
+                "handlers": ["file"],
                 "propagate": False,
             },
             "config": {
                 "level": log_level,
-                "handlers": ["console", "file"],
+                "handlers": ["file"],
                 "propagate": False,
             },
             "uvicorn": {
                 "level": log_level,
-                "handlers": ["console"],
+                "handlers": ["console", "file"],
                 "propagate": False,
             },
             "uvicorn.access": {
                 "level": log_level,
-                "handlers": ["console"],
+                "handlers": ["console", "file"],
                 "propagate": False,
             },
         },
-    }
-
-    logging.config.dictConfig(log_config)
-    
-    # Добавляем тестовое сообщение для проверки работы логгера
-    logging.getLogger("src.infrastructure.logging").info("Logging system initialized")
+    } # type: ignore
+    logging_config.dictConfig(log_config) # type: ignore
+    logger = getLogger("src.infrastructure.logging")
+    logger.info("Logging system initialized")
+    return logger

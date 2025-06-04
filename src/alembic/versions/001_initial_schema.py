@@ -21,27 +21,21 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.execute(
         """
-        CREATE TABLE "FullName" (
-            id SERIAL PRIMARY KEY NOT NULL UNIQUE,
-            name VARCHAR NOT NULL,
-            surname VARCHAR NOT NULL,
-            patronymic VARCHAR NULL
-        );
-
         CREATE TABLE "Users" (
             id SERIAL PRIMARY KEY NOT NULL UNIQUE,
             login VARCHAR(50) NOT NULL UNIQUE,
             email VARCHAR NULL UNIQUE,
-            full_name INTEGER NULL UNIQUE,
+            name VARCHAR NULL,
+            surname VARCHAR NULL,
+            patronymic VARCHAR NULL,
             password VARCHAR NOT NULL,
             input_tokens INTEGER NULL,
-            output_tokens INTEGER NULL,
-            FOREIGN KEY (full_name) REFERENCES "FullName" (id)
+            output_tokens INTEGER NULL
         );
 
         CREATE TABLE "AIInfo" (
             id SERIAL PRIMARY KEY NOT NULL UNIQUE,
-            system_promt VARCHAR NULL,
+            system_prompt VARCHAR NULL,
             temperature DOUBLE PRECISION NOT NULL DEFAULT 0.7,
             top_p DOUBLE PRECISION NOT NULL DEFAULT 0.8,
             stream BOOLEAN DEFAULT false,
@@ -50,9 +44,9 @@ def upgrade() -> None:
 
         CREATE TABLE "Chat" (
             id SERIAL PRIMARY KEY NOT NULL UNIQUE,
-            title VARCHAR(100) NULL,
-            ai_config INTEGER NOT NULL,
-            FOREIGN KEY (ai_config) REFERENCES "AIInfo" (id)
+            title VARCHAR(100) NOT NULL,
+            ai_config_id INTEGER NOT NULL,
+            FOREIGN KEY (ai_config_id) REFERENCES "AIInfo" (id)
         );
 
         CREATE TABLE "ChatHistory" (

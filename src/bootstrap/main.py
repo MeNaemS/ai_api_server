@@ -6,7 +6,9 @@ from fastapi import FastAPI
 # Dependency injection
 from dishka.integrations.fastapi import setup_dishka, FastapiProvider
 from dishka import make_async_container, AsyncContainer
-from src.adapters.api.di.container import Container
+from src.bootstrap.providers.container import Container
+from src.bootstrap.providers.auth import AuthContainer
+from src.bootstrap.providers.mappers import MapperContainer
 
 # Application components
 from src.infrastructure.logging.logger_setup import setup_logger
@@ -32,7 +34,12 @@ app.include_router(auth_router)
 
 # ----- Dependency Injection Setup -----
 # Create async container with our DI container and FastAPI provider
-container: AsyncContainer = make_async_container(Container(), FastapiProvider())
+container: AsyncContainer = make_async_container(
+    Container(),
+    AuthContainer(),
+    MapperContainer(),
+    FastapiProvider()
+)
 
 # Configure FastAPI to use our DI container
 setup_dishka(app=app, container=container)

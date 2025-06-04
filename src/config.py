@@ -6,7 +6,7 @@ Loads and validates configuration from TOML files.
 # ----- Imports -----
 from dynaconf import Dynaconf
 from adaptix import Retort
-from config.schema import Config
+from src.config_schema import Config
 
 
 # ----- Configuration Loading -----

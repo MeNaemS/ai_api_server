@@ -17,7 +17,7 @@ A modern API server for AI-powered chat applications with authentication and dat
 - **Python 3.13+**: Modern Python features
 - **FastAPI**: High-performance web framework
 - **PostgreSQL**: Reliable database storage
-- **Asyncpg**: Asynchronous PostgreSQL client
+- **Psycopg**: Asynchronous PostgreSQL client
 - **Alembic**: Database migrations
 - **Dishka**: Dependency injection
 - **JWT**: Authentication tokens
@@ -25,7 +25,7 @@ A modern API server for AI-powered chat applications with authentication and dat
 
 ## 🏗️ Project Structure
 
-```
+```text
 AIServer/
 ├── alembic/              # Database migrations
 ├── config/               # Application configuration
@@ -48,24 +48,28 @@ AIServer/
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourusername/AIBot.git
    cd AIBot/AIServer
    ```
 
 2. Create a virtual environment:
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. Create a `.env` file with your configuration:
-   ```
+
+   ```text
    POSTGRES_NAME=your_username
    POSTGRES_PASSWORD=your_password
    POSTRGES_DATABASE=your_database
@@ -83,6 +87,7 @@ The application uses a two-tier configuration system:
    - Contains sensitive data like API keys and JWT secrets
    - Should NOT be committed to version control (included in .gitignore)
    - Example structure:
+
      ```toml
      [jwt]
      secret_key = "your-secret-key-here"
@@ -97,26 +102,28 @@ The application uses a two-tier configuration system:
 ### Running with Docker
 
 1. Start the services:
+
    ```bash
    docker-compose up -d
    ```
 
-2. Access pgAdmin at http://localhost:5050 to manage your database.
+2. Access pgAdmin at <http://localhost:5050> to manage your database.
 
 ### Database Setup
 
 1. Run migrations:
+
    ```bash
-   alembic upgrade head
+   alembic -c src/alembic.ini upgrade head
    ```
 
 ### Running the Server
 
 ```bash
-uvicorn src.adapters.api.main:app
+uvicorn src.bootstrap.main:app
 ```
 
-The API will be available at http://localhost:8000 with interactive documentation at http://localhost:8000/docs.
+The API will be available at <http://localhost:8000> with interactive documentation at <http://localhost:8000/docs>.
 
 ## 🧪 Testing
 
@@ -128,7 +135,7 @@ pytest
 
 ## 📝 API Documentation
 
-Once the server is running, visit http://localhost:8000/docs for the interactive API documentation.
+Once the server is running, visit <http://localhost:8000/docs> for the interactive API documentation.
 
 ### Main Endpoints
 

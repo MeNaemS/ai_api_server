@@ -1,50 +1,66 @@
-from src.application.ports.auth_repository import AuthRepository
-from src.domain.models.user import UserInDB, RegisterUser
+from src.domain.models.user import RegisterUser
+from src.infrastructure.database.models.users import User
 from src.infrastructure.security.password_hasher import PasswordHasher
-import asyncpg
 import logging
+from typing import Optional
+from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select, insert
 
 logger = logging.getLogger(__name__)
 
 
-class AsyncPGAuthRepository(AuthRepository):
-    def __init__(self, pool: asyncpg.Pool, hasher: PasswordHasher):
-        self.pool: asyncpg.Pool = pool
+class AsyncPGAuthRepository:
+    def __init__(self, session: sessionmaker[AsyncSession], hasher: PasswordHasher):
+        self.session: sessionmaker[AsyncSession] = session
         self.hasher: PasswordHasher = hasher
         logger.info("AsyncPGAuthRepository initialized")
 
-    async def get_user_in_db_by_login(self, login: str) -> UserInDB:
+    async def get_user_in_db_by_login(self, login: str) -> Optional[User]:
         logger.info(f"Attempting to get user by login: {login}")
-        async with self.pool.acquire() as conn:
-            row = await conn.fetchrow('SELECT * FROM "Users" WHERE login = $1', login)
-            if row:
+        async with self.session() as session:
+            result = await session.execute(select(User).where(User.login == login))
+            user = result.scalar_one_or_none()
+            if user:
                 logger.info(f"User found with login: {login}")
-                return UserInDB(**row)
+                return user
             logger.info(f"No user found with login: {login}")
-            return None
+            return
 
-    async def create_user_in_db(self, user: RegisterUser) -> UserInDB:
-        logger.info(f"Creating new user with login: {user.login}")
-        hashed_password: str = await self.hasher.password_hash(user.password)
-        async with self.pool.acquire() as conn:
-            if user.full_name:
-                logger.info("Creating full name record for user")
-                full_name_id: int = await conn.fetchval(
-                    'INSERT INTO "FullName" (name, surname, patronymic) VALUES ($1, $2, $3) RETURNING id',
-                    user.full_name.name,
-                    user.full_name.surname,
-                    user.full_name.patronymic
+    async def create_user_in_db(self, new_user: RegisterUser) -> User:
+        logger.info(f"Creating new user with login: {new_user.login}")
+        hashed_password: str = await self.hasher.password_hash(new_user.password)
+        async with self.session() as session:
+            logger.info("Checking if user already exists")
+            user = await session.execute(select(User).where(User.login == new_user.login))
+            if user.scalar_one_or_none():
+                logger.info(f"User with login {new_user.login} already exists")
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Login already exists"
                 )
-                logger.info(f"Full name record created with ID: {full_name_id}")
-            
-            logger.info(f"Inserting user record for {user.login}")
-            row = await conn.fetchrow(
-                'INSERT INTO "Users" (login, email, full_name, password) VALUES ($1, $2, $3, $4) RETURNING *',
-                user.login,
-                user.email,
-                user.full_name if not user.full_name else full_name_id,
-                hashed_password,
-            )
-            logger.info(f"User created successfully with ID: {row['id']}")
-            return UserInDB(**row)
-
+            logger.info(f"Inserting user record for {new_user.login}")
+            if new_user.full_name:
+                user = await session.execute(
+                    insert(User).values(
+                        login=new_user.login,
+                        email=new_user.email,
+                        name=new_user.full_name.name,
+                        surname=new_user.full_name.surname,
+                        patronymic=new_user.full_name.patronymic,
+                        password=hashed_password
+                    ).returning(User)
+                )
+            else:
+                user = await session.execute(
+                    insert(User).values(
+                        login=new_user.login,
+                        email=new_user.email,
+                        password=hashed_password
+                    ).returning(User)
+                )
+            user = user.scalar_one()
+            logger.info(f"User created successfully with ID: {user.id}")
+            await session.commit()
+            return user

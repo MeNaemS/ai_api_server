@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from src.domain.models.user import AuthUser, RegisterUser
-from src.domain.models.token import Token
-from src.application.user_cases.auth_user_case import AuthService
+from src.infrastructure.dtos.token import Token
+from src.application.usecases.auth_user_case import AuthService
 from fastapi.security import OAuth2PasswordRequestForm  # ToDo: use it later
 
 
