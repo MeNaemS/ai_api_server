@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, status
 from dishka.integrations.fastapi import DishkaRoute, FromDishka
 from src.domain.models.user import AuthUser, RegisterUser
 from src.infrastructure.dtos.token import Token
@@ -6,7 +6,7 @@ from src.application.usecases.auth_user_case import AuthService
 from fastapi.security import OAuth2PasswordRequestForm  # ToDo: use it later
 
 
-router = APIRouter(prefix="/auth", tags=["auth"], route_class=DishkaRoute)
+router: APIRouter = APIRouter(prefix="/auth", tags=["auth"], route_class=DishkaRoute)
 
 
 @router.post("/token", response_model=Token)
@@ -22,7 +22,7 @@ async def login_for_access_token(
     return token
 
 
-@router.post("/users", response_model=Token)
+@router.post("/users", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def create_user(
     request: Request,
     user: RegisterUser,
